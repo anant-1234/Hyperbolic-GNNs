@@ -150,7 +150,7 @@ def load_data_lp(dataset, use_feats, data_path):
 def load_data_nc(dataset, use_feats, data_path, split_seed):
     if dataset == 'general':
         adj, features, labels = load_general_data(dataset, data_path, return_label=True)
-        val_prop, test_prop = 0.10, 0.20 # Hyperparameters
+        val_prop, test_prop = 0.10, 0.20 # HYPERPARAMETERS 
         idx_val, idx_test, idx_train = split_data(labels, val_prop, test_prop, seed=split_seed)
     elif dataset in ['cora', 'pubmed']:
         adj, features, labels, idx_train, idx_val, idx_test = load_citation_data(
@@ -259,7 +259,18 @@ def load_data_airport(dataset_str, data_path, return_label=False):
     else:
         return sp.csr_matrix(adj), features
 
+"""
+
+### DATA FORMAT FOR GENERAL GRAPHS #####
+
+
+The data is stored as a pickled graph (https://networkx.github.io/documentation/networkx-1.10/reference/readwrite.gpickle.html).
+Every node has two attributes :- 1) 'feat' stores the features of that node. 2) 'label' stores the label of that node.
+
+"""
+
 def load_general_data(dataset_str, data_path, return_label=False):
+    """Extract adjacency matrix, features and labels from a general dataset in the defined format"""
     graph = pkl.load(open(os.path.join(data_path, dataset_str + '.p'), 'rb'))
     adj = nx.adjacency_matrix(graph)
     features = np.array([graph.nodes[node]['feat'] for node in graph.nodes()])
