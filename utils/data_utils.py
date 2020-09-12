@@ -8,7 +8,6 @@ import numpy as np
 import scipy.sparse as sp
 import torch
 
-
 def load_data(args, datapath):
     if args.task == 'nc':
         data = load_data_nc(args.dataset, args.use_feats, datapath, args.split_seed)
@@ -137,6 +136,8 @@ def load_data_lp(dataset, use_feats, data_path):
         adj, features = load_synthetic_data(dataset, use_feats, data_path)[:2]
     elif dataset == 'airport':
         adj, features = load_data_airport(dataset, data_path, return_label=False)
+    elif dataset == 'general':
+        adj, features = load_general_data(dataset, data_path, return_label=False)
     else:
         raise FileNotFoundError('Dataset {} is not supported.'.format(dataset))
     data = {'adj_train': adj, 'features': features}
@@ -147,7 +148,11 @@ def load_data_lp(dataset, use_feats, data_path):
 
 
 def load_data_nc(dataset, use_feats, data_path, split_seed):
-    if dataset in ['cora', 'pubmed']:
+    if dataset == 'general':
+        adj, features, labels = load_general_data(dataset, data_path, return_label=True)
+        val_prop, test_prop = 0.10, 0.20 # Hyperparameters
+        idx_val, idx_test, idx_train = split_data(labels, val_prop, test_prop, seed=split_seed)
+    elif dataset in ['cora', 'pubmed']:
         adj, features, labels, idx_train, idx_val, idx_test = load_citation_data(
             dataset, use_feats, data_path, split_seed
         )
@@ -254,3 +259,12 @@ def load_data_airport(dataset_str, data_path, return_label=False):
     else:
         return sp.csr_matrix(adj), features
 
+def load_general_data(dataset_str, data_path, return_label=False):
+    graph = pkl.load(open(os.path.join(data_path, dataset_str + '.p'), 'rb'))
+    adj = nx.adjacency_matrix(graph)
+    features = np.array([graph.nodes[node]['feat'] for node in graph.nodes()])
+    if return_label:
+        labels = np.array([graph.nodes[node]['label'] for node in graph.nodes()])
+        return sp.csr_matrix(adj), features, labels
+    else:
+        return sp.csr_matrix(adj), features
